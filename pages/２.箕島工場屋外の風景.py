@@ -1,0 +1,162 @@
+import streamlit as st
+from PIL import Image
+import pandas as pd
+import numpy as np
+import sqlite3 
+import hashlib
+import subprocess
+import sys
+
+conn = sqlite3.connect('database.db')
+c = conn.cursor()
+
+conn2 = sqlite3.connect('NGdatabase.db')
+c2 = conn2.cursor()
+
+def make_hashes(password):
+    return hashlib.sha256(str.encode(password)).hexdigest()
+
+def check_hashes(password,hashed_text):
+    if make_hashes(password) == hashed_text:
+        return hashed_text
+    return False
+
+def create_user():
+    c.execute('CREATE TABLE IF NOT EXISTS userstable(username TEXT,password TEXT)')
+
+def add_user(username,password):
+    c.execute('INSERT INTO userstable(username,password) VALUES (?,?)',(username,password))
+    conn.commit()
+
+def login_user(username,password):
+    c.execute('SELECT * FROM userstable WHERE username =? AND password = ?',(username,password))
+    data = c.fetchall()
+    return data
+
+def check_login_user(username,password):
+    c2.execute('SELECT * FROM userstable WHERE username =? AND password = ?',(username,password))
+    data = c2.fetchall()
+    return data
+
+def main():
+    #st.title("ログイン画面")
+    st.sidebar.title('ログイン・サインアップ')
+    menu = ["ログイン","サインアップ"]
+    choice = st.sidebar.selectbox("メニュー",menu)
+    if choice == "ログイン":
+        #st.subheader("ログイン画面です")
+        username = st.sidebar.text_input("ユーザー名を入力してください")
+        password = st.sidebar.text_input("パスワードを入力してください",type='password')
+        if st.sidebar.button('ログイン'):
+            create_user()
+            hashed_pswd = make_hashes(password)
+            result = login_user(username,check_hashes(password,hashed_pswd))
+            if result:
+                password = username
+                result2 = check_login_user(username,password)
+                if result2:
+                    st.sidebar.title("{}は利用権がありません".format(username))
+                    st.snow()
+                    st.toast('ログイン失敗', icon='😂')
+                else:
+                    st.sidebar.title("{}でログインしました".format(username)) 
+                    st.title("箕島工場屋外の風景")
+                    st.balloons()
+                    st.toast('ログイン成功', icon='😍')
+                    
+                    
+                    st.text('')
+                    st.text('')
+                    st.text('・ゴキブリ その1')
+                    image1 = Image.open('./data/1-1.jpg')
+                    image2 = Image.open('./data/1-2.jpg')
+                    img_list = []
+                    img_list.append(image1)
+                    img_list.append(image2)    
+                    st.image(img_list,width=1000)
+
+                                                      
+                    st.text('')
+                    st.text('')
+                    st.text('・ゴキブリ　その2')
+                    image1 = Image.open('./data/2-1.jpg')
+                    image2 = Image.open('./data/2-2.jpg')
+                    img_list = []
+                    img_list.append(image1)
+                    img_list.append(image2)    
+                    st.image(img_list,width=1000)
+                                                                                        
+                    st.text('')
+                    st.text('')
+                    st.text('・原料を屋外で保管　大丈夫?')
+                    image1 = Image.open('./data/3-1.jpg')
+                    image1_route = image1.rotate(-90,expand=True)
+                    img_list = []
+                    img_list.append(image1_route)
+                    st.image(img_list,width=1000)
+
+                    st.text('')
+                    st.text('')
+                    st.text('・掃除後の駐車場風景(枯葉だらけ　これで掃除済み?)')
+                    image4 = Image.open('./data/4-4.jpg')
+                    image5 = Image.open('./data/4-5.jpg')
+                    image6 = Image.open('./data/4-6.jpg')
+                    img_list = []
+                    img_list.append(image4)
+                    img_list.append(image5)
+                    img_list.append(image6)
+                    st.image(img_list,width=1000)
+
+                    st.text('')
+                    st.text('')
+                    st.text('・パレットの保管(工場内で使用)これで大丈夫?')
+                    image1 = Image.open('./data/5-1.jpg')
+                    image1_route = image1.rotate(-90,expand=True)
+                    image2 = Image.open('./data/5-2.jpg')
+                    img_list = []
+                    img_list.append(image1)
+                    img_list.append(image2)
+                    st.image(img_list,width=1000)
+
+                    
+                    st.text('')
+                    st.text('')
+                    st.text('・工場で使用の原料　缶の蓋は汚れていますが大丈夫?')
+                    image1 = Image.open('./data/6-1.jpg')
+                    image1_route = image1.rotate(-90,expand=True)
+                    image2 = Image.open('./data/6-2.jpg')
+                    img_list = []
+                    img_list.append(image1)
+                    img_list.append(image2)
+                    st.image(img_list,width=1000)
+
+                    #　動画
+                    #st.text('')
+                    #st.text('')
+                    #st.text('⑱工場屋外での生きたゴキブリ発見')
+                    #video_file = open('./data/生きたゴキブリ.mp4','rb')
+                    #video_bytes = video_file.read()
+                    #st.video(video_bytes)
+
+                    st.info('随時更新予定．．．', icon="✅") 
+            else:
+                st.warning("ユーザー名かパスワードが間違っています")
+                st.toast('ログイン失敗', icon='😂')
+                st.snow()
+
+    elif choice == "サインアップ":
+        st.subheader("新しいアカウントを作成します")
+        new_user = st.text_input("ユーザー名を入力してください")
+        new_password = st.text_input("パスワードを入力してください",type='password')
+        if st.button("サインアップ"):
+            create_user()
+            add_user(new_user,make_hashes(new_password))
+            st.success("アカウントの作成に成功しました")
+            st.info("ログイン画面からログインしてください")
+            st.balloons()
+            st.toast('サインアップ成功', icon='😍')
+            
+if __name__ == '__main__':
+    main()
+
+
